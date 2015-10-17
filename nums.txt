@@ -1,0 +1,48 @@
+in
+push Tyr
+pop Tyr
+trin NEGATIVE
+:POSITIVE 
+push 0
+push Gly
+:OUT+
+pop Gly
+out
+:ZERO
+pop Tyr
+triz END
+:COMPARE+
+pop Gly
+push 1
+add
+push Gly
+pop Tyr
+pop Gly
+sub
+push Val
+pop Val
+trip OUT+
+pop Val
+triz OUT+
+:NEGATIVE
+pop Tyr
+trip END
+push 0
+push Gly
+:OUT-
+pop Gly
+out
+:COMPARE-
+pop Gly
+push -1
+add
+push Gly
+pop Tyr
+pop Gly
+sub
+push Val
+pop Val
+trin OUT-
+pop Val
+triz OUT-
+:END
