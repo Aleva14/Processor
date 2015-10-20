@@ -27,8 +27,7 @@ def CalcRevPol(task):
             if temp[1].isdigit() or (temp[1][0] == '-' and temp[1][1:].isdigit()):
                 stack.append(int(temp[1]))
             elif temp[1] in register.keys():
-                a = GetValue(stack)
-                register[temp[1]] = a
+                stack.append(register[temp[1]])
             else:
                 errno = error.index('wtf')
                 return Report("'wtf'", i + 1, task[i])    
@@ -75,7 +74,7 @@ def CalcRevPol(task):
                     return Report("'no such string'", i + 1, task[i])
      	elif temp[0] == 'pop':
             if temp[1] in register.keys():
-                stack.append(register[temp[1]])
+                register[temp[1]] = GetValue(stack)
             else:
                 errno = error.index('no such register')
                 return Report("'no such register'", i + 1, task[i])

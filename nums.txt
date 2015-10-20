@@ -1,48 +1,48 @@
 in
-push Tyr
 pop Tyr
+push Tyr
 trin NEGATIVE
 :POSITIVE 
 push 0
-push Gly
-:OUT+
 pop Gly
+:OUT+
+push Gly
 out
 :ZERO
-pop Tyr
+push Tyr
 triz END
 :COMPARE+
-pop Gly
+push Gly
 push 1
 add
-push Gly
-pop Tyr
 pop Gly
+push Tyr
+push Gly
 sub
+pop Val
 push Val
-pop Val
 trip OUT+
-pop Val
+push Val
 triz OUT+
 :NEGATIVE
-pop Tyr
+push Tyr
 trip END
 push 0
-push Gly
-:OUT-
 pop Gly
+:OUT-
+push Gly
 out
 :COMPARE-
-pop Gly
+push Gly
 push -1
 add
-push Gly
-pop Tyr
 pop Gly
+push Tyr
+push Gly
 sub
+pop Val
 push Val
-pop Val
 trin OUT-
-pop Val
+push Val
 triz OUT-
 :END
