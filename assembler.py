@@ -1,11 +1,12 @@
 import sys
 import struct
 
-command = {"push_num": 0, "push_reg": 1, "pop": 2, "in": 3, "out": 4, "tr": 5, "triz": 6, "trip": 7, "trin": 8, "add": 9, "mul": 10, "sub": 11, "div": 12}
-register = {"Gly": 0, "Ala": 1, "Val": 2, "Leu": 3, "Ser": 4, "Thr": 5, "Asp": 6, "Asn": 7, "Glu": 8, "Gln": 9,  "Lys": 10,"Arg": 11, "Cys": 12, "Met": 13, "Fen": 14, "Tyr": 15, "Trp": 16, "Hys": 17, "Pro": 18}
+command = {"push_num": 0, "push_reg": 1, "pop": 2, "in": 3, "out": 4, "tr": 5, 
+"triz": 6, "trip": 7, "trin": 8, "add": 9, "mul": 10, "sub": 11, "div": 12}
+register = {"Gly": 0, "Ala": 1, "Val": 2, "Leu": 3, "Ser": 4, "Thr": 5, 
+"Asp": 6, "Asn": 7, "Glu": 8, "Gln": 9,  "Lys": 10,"Arg": 11, "Cys": 12, 
+"Met": 13, "Fen": 14, "Tyr": 15, "Trp": 16, "Hys": 17, "Pro": 18}
 
-result = []
-label = {}
 
 def Assemble(program):
     global errno
@@ -13,7 +14,15 @@ def Assemble(program):
     global label
     
     result = []
-    
+
+    empty = 1
+    for i in program:
+        if not i.isspace() and i:
+            empty = 0
+    if empty:
+        errno = error.index('no program')
+        return 'No program -('
+
     for j in program:
         if j[0] == ':':
             index = program.index(j)
@@ -89,60 +98,61 @@ def Assemble(program):
         else:
             errno = error.index('wtf')
             return Report("'wtf'", i + 1, program[i])
+
         i += 1
 
-def IsOk():
+def IsNotOk():
     if errno:
         return 1
     else:
         return 0
 
-def Report(error, strnum, wrongstring):
-    return "Error {} in string {}:\n{}".format(error, strnum, wrongstring) 
+def Report(error, str_num, wrong_string):
+    return "Error {} in string {}:\n{}".format(error, str_num, wrong_string) 
 
 def Transform(num):
     if num >= 0 and num <= max_int / 2 - 1:
-        return struct.pack("I", num)
+        return struct.pack("H", num)
     elif num < 0 and num >= -max_int / 2:
         num = max_int + num
-        return struct.pack("I", num)
+        return struct.pack("H", num)
     else:
-        return "error"
+        return 'error'
 
 
-error = ['ok','wtf', 'no such label', 'no such register', 'too large int']
+error = ['ok','wtf', 'no such label', 'no such register', 'too large int', 'no program']
 num_of_bits = 16
 max_int = 2 ** num_of_bits
-one = int('1' + '0' * num_of_bits, 2)
 errno = 0
 
 result = []
 label = {}
+result_bin = []
 
 program = open(sys.argv[1])
 program = program.readlines()
 
 error_report = Assemble(program)
-if IsOk():
+if IsNotOk():
     print error_report
     sys.exit(errno)
 
 Assemble(program)
-print result
-result_hex = []
 for i in result:
     a = Transform(i)
-    result_hex.append(a)
-    if a == "error":
+    result_bin.append(a)
+    if a == 'error':
         errno = error.index('too large int')
-        sys.exit(errno)
+        print 'too large int', i
+
 
 if len(sys.argv) > 2:
     path = sys.argv[2]
 else:
-    path = 'result.txt' 
+    path = 'result.bin' 
 f = open(path, 'wb')
-for i in result_hex:
+for i in result_bin:
     f.write(i)
-print result_hex
+print result
+print result_bin
 
