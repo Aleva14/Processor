@@ -6,6 +6,7 @@
 
 enum D_errors{
 	NO_MEM = 1,
+	NO_STACK,
 	WRONG_SIZE,
 	FULL,
 	EMPTY
@@ -16,11 +17,11 @@ typedef int Type;
 typedef struct stack{
         int size;
         Type *elem;
-        Type *head;
+        int head;
 } D_stack;
 
 D_stack *d_stack_create(int size){
-	if ((size == 0) || (size > MAX_SIZE)) {
+	if ((size <= 0) || (size > MAX_SIZE)) {
 		d_errno = WRONG_SIZE;
 		return NULL;
 	}
@@ -35,68 +36,87 @@ D_stack *d_stack_create(int size){
 		return NULL;
 	}
 	stack->size = size;
-	stack->head = stack->elem;
+	stack->head = 0;
 	return stack;
 }
 
-int d_stack_realloc(D_stack *stack){
-	if (stack->size * 2 > MAX_SIZE){
+int d_stack_realloc(D_stack *stack, int size){
+	if (stack == NULL){
+		d_errno = NO_STACK;
+		return 1;
+	}
+	if ((size > MAX_SIZE) || (size < stack->head)){
 		d_errno = WRONG_SIZE;
 		return 1;
 	}
-	stack->elem = (Type *)realloc(stack->elem, stack->size * 2 * sizeof(Type));
+	stack->elem = (Type *)realloc(stack->elem, size * sizeof(Type));
 	if (stack->elem == NULL){
 		d_errno = NO_MEM;
 		return 1;
 	}
-	stack->size *= 2;
+	stack->size = size;
 	return 0;
 }
 
-void d_stack_delete(D_stack *stack){
-        free(stack->elem);
+int d_stack_delete(D_stack *stack){
+        if (stack == NULL){
+                d_errno = NO_STACK;
+                return 1;
+        }
+	free(stack->elem);
 	free(stack);
+	return 0;
 }
 
 int d_stack_is_full(D_stack *stack){
-	if (stack->head - stack->elem < stack->size)
+	if (stack->head < stack->size)
 		return 0;
 	else
 		return 1;	
 }
 
 int d_stack_is_empty(D_stack *stack){
-	if (stack->head == stack->elem)
+	if (stack->head == 0)
 		return 1;
 	else
 		return 0;
 }
 
-
 int d_stack_push(D_stack *stack, Type data){
+	if (stack == NULL){
+		d_errno = NO_STACK;
+		return 1;
+	}
         if (d_stack_is_full(stack)){
 		d_errno = FULL;
 		return 1;
 	}
-	*stack->head = data;
+	*(stack->elem + stack->head) = data;
         stack->head++;
         return 0;
 }
 
 Type d_stack_pop(D_stack *stack){
+	if (stack == NULL){
+                d_errno = NO_STACK;
+                return 1;
+        }
         if (d_stack_is_empty(stack)){
 		d_errno = EMPTY;
 		return D_POP_ERR_RETVAL;
 	}
 	stack->head--;
-        return *(stack->head + 1);
+        return *(stack->elem + stack->head + 1);
 }
 
-
 int d_stack_dump(D_stack *stack){
-        Type *tmp = stack->elem;
+        if (stack == NULL){
+		d_errno = NO_STACK;
+                return 1;
+        }
+	int tmp = 0;
         while (tmp != stack->head){
-                printf("%d ", *tmp);
+                printf("%d ", *(stack->elem + tmp));
                 tmp++;
         }
 	if (d_stack_is_empty(stack))
@@ -105,4 +125,5 @@ int d_stack_dump(D_stack *stack){
 		printf("\nStack is full\n");
 	else 
 		printf("\n");
+	return 0;
 }
