@@ -7,12 +7,10 @@
 #define REG_NUM 20
 #define PROG_MEM_SIZE 65536 // 2 ^ 16
 
-typedef uint8_t byte;
 typedef uint16_t reg;
 
 enum Register{
-	Gly,Ala,Val,Leu,Ser,Thr,Asp,Asn,Glu,Gln,Lys,Arg,Cys,Met,Fen,Tyr,Trp,Hys,Pro,Npc
-};
+	Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc};
 
 enum Command {push_num, push_reg, pop, in, out, tr,triz, trip, trin, add, mul, sub, divide};
 
@@ -28,10 +26,12 @@ int p_errno = 0;
 
 typedef struct cpu{
 	S_stack mem;
-	byte firmware[PROG_MEM_SIZE];
+	reg firmware[PROG_MEM_SIZE];
 	reg r[REG_NUM];
 	int prog_len;
 } Cpu;
+
+int cpu_dump(Cpu *cpu);
 
 int cpu_init(Cpu *cpu){
 	if (s_stack_init(&cpu->mem)){
@@ -59,25 +59,35 @@ int cpu_flash(int fd, Cpu *cpu){
 	else if (t < p_len){
 		p_errno = EOF_FMEM;
 	}
-	cpu->prog_len = t;
+	cpu->prog_len = t / 2;
 	return 0;		
+}
+
+static inline cpu_push_num(Cpu *cpu, reg num){
+	s_stack_push(&cpu->mem, num);
+}
+
+static inline cpu_pop(Cpu *cpu, int reg_num){
+	cpu->r[reg_num] = s_stack_pop(&(cpu->mem));
 }
 
 int cpu_start(Cpu *cpu){
 	int i = 0;
-	reg *cur_c;
 	while (i < cpu->prog_len){
-		cur_c = &(cpu->firmware[i]);
-		switch (*cur_c){
+		switch (cpu->firmware[i]){
 			case push_num:
-				s_stack_push(&cpu->mem, *(cur_c + 1));
+				cpu_push_num(cpu, cpu->firmware[i + 1]);
 				i += 2;
-			default:
-				i++;
+				printf("i = %d", i);
+			case pop:
+                               cpu_pop(cpu, cpu->firmware[i + 1]);
+                               i += 2;
+
 		}
 	}
 	return 0;
 }
+
 
 int cpu_dump(Cpu *cpu){
 	printf("\n\nCPU dump\n");
@@ -86,15 +96,9 @@ int cpu_dump(Cpu *cpu){
 	for (i = 0; i < REG_NUM; i++){
 		printf("%-2d %s %d\n", i, Reg[i], cpu->r[i]);
 	}
-	printf("Firmware (bytes)\n");
-	for (i = 0; i <	cpu->prog_len; i++){
-		printf("%02x ", cpu->firmware[i]);
-	}
-	printf("\nFirmware (commands)\n");
-	for(i = 0; i < cpu->prog_len; i += 2){
-		reg *tmp;
-		tmp = &(cpu->firmware[i]);
-		printf("%04x ", *tmp);
+	printf("\nFirmware\n");
+	for(i = 0; i < cpu->prog_len; i += 1){
+		printf("%04x ", cpu->firmware[i]);
 	}
 	printf("\nStack\n");
 	s_stack_dump(&cpu->mem);	
@@ -105,7 +109,6 @@ int main(){
 	Cpu cpu;
 	cpu_init(&cpu);
 	cpu_flash(fd, &cpu);
-	printf("Errno %d", p_errno);
 	cpu_start(&cpu);
 	cpu_dump(&cpu);
 	return 0;	 

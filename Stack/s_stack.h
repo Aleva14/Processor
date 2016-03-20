@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define SIZE 1024
 #define S_POP_ERR_RETVAL -42
@@ -9,9 +10,9 @@ enum S_errors{
         EMPTY,
 	NO_STACK
 };
-extern int s_errno = 0;
+extern int s_errno;
 
-typedef int Type;
+typedef uint16_t Type;
 typedef struct stack{
 	Type elem[SIZE];
 	int head;
