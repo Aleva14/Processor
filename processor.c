@@ -12,14 +12,16 @@ typedef uint16_t reg;
 enum Register{
 	Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc};
 
-enum Command {push_num, push_reg, pop, in, out, tr,triz, trip, trin, add, mul, sub, divide};
+enum Command {push_num, push_reg, pop, in, out, tr, triz, trip, trin, add, mul, sub, divide};
 
 char Reg[20][4] = {"Gly\0", "Ala\0", "Val\0", "Leu\0", "Ser\0", "Thr\0", "Asp\0", "Asn\0", "Glu\0", "Gln\0", "Lys\0", "Arg\0", "Cys\0", "Met\0", "Fen\0", "Tyr\0", "Trp\0", "Hys\0", "Pro\0","Npc\0"};
 
 enum P_errors{ 
         INV_PROC = 1,
 	NO_PROG,
-	EOF_FMEM
+	EOF_FMEM,
+	DIV_BY_0,
+	EMPTY_STACK
 };
 
 int p_errno = 0;
@@ -64,11 +66,111 @@ int cpu_flash(int fd, Cpu *cpu){
 }
 
 static inline cpu_push_num(Cpu *cpu, reg num){
+	printf("push_num %d\n", num);
 	s_stack_push(&cpu->mem, num);
 }
 
 static inline cpu_pop(Cpu *cpu, int reg_num){
-	cpu->r[reg_num] = s_stack_pop(&(cpu->mem));
+	reg tmp = s_stack_pop(&(cpu->mem));
+	printf("pop num %d\n", tmp);
+	if (s_errno == EMPTY){
+		p_errno = EMPTY_STACK;
+	}
+	else {
+		cpu->r[reg_num] = tmp;
+	}
+}
+
+static inline cpu_push_reg(Cpu *cpu, int reg_num){
+	s_stack_push(&cpu->mem, cpu->r[reg_num]);	
+}
+
+static inline cpu_add(Cpu *cpu){
+	int a = s_stack_pop(&cpu->mem);
+	int b = s_stack_pop(&cpu->mem);
+	if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else {
+                s_stack_push(&cpu->mem, a + b);
+	}
+}
+
+static inline cpu_sub(Cpu *cpu){
+        int a = s_stack_pop(&cpu->mem);
+        int b = s_stack_pop(&cpu->mem);
+        if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else {
+                s_stack_push(&cpu->mem, b - a);
+	}
+}
+
+static inline cpu_mul(Cpu *cpu){
+        int a = s_stack_pop(&cpu->mem);
+        int b = s_stack_pop(&cpu->mem);
+        if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else {
+                s_stack_push(&cpu->mem, a * b);
+	}
+}
+
+static inline cpu_div(Cpu *cpu){
+        int a = s_stack_pop(&cpu->mem);
+        int b = s_stack_pop(&cpu->mem);
+        if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else if (a != 0){
+		s_stack_push(&cpu->mem, b / a);
+	}
+	else {
+		p_errno = DIV_BY_0;		
+	}
+}
+
+static inline cpu_trip(Cpu *cpu, int *i, int destination){
+	reg a = s_stack_pop(&cpu->mem);
+	if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+	else if (a > 0){
+		*i = destination;
+	}
+	else {
+		*i += 2;
+	}
+	
+}
+
+static inline cpu_trin(Cpu *cpu, int *i, int destination){
+        reg a = s_stack_pop(&cpu->mem);
+        if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else if (a < 0){
+                *i = destination;
+        }
+	else {
+		*i += 2;
+	}
+
+}
+
+static inline cpu_triz(Cpu *cpu, int *i, int destination){
+        reg a = s_stack_pop(&cpu->mem);
+        if (s_errno == EMPTY){
+                p_errno = EMPTY_STACK;
+        }
+        else if (a == 0){
+                *i = destination;
+        }
+	else {
+		*i += 2;
+	}
 }
 
 int cpu_start(Cpu *cpu){
@@ -78,12 +180,66 @@ int cpu_start(Cpu *cpu){
 			case push_num:
 				cpu_push_num(cpu, cpu->firmware[i + 1]);
 				i += 2;
-				printf("i = %d", i);
+				break;
 			case pop:
-                               cpu_pop(cpu, cpu->firmware[i + 1]);
-                               i += 2;
+				cpu_pop(cpu, cpu->firmware[i + 1]);
+                            	if (p_errno){
+					break;
+				}
+				i += 2;
+				break;
+			case push_reg:
+				cpu_push_reg(cpu, cpu->firmware[i + 1]);
+				i += 2;
+				break;
+			case add:
+				cpu_add(cpu);
+				if (p_errno){
+                                        break;
+                                }
+				i++;
+				break;
+			case mul:
+                                cpu_mul(cpu);
+                                if (p_errno){
+                                        break;
+                                }
+				i++;
+                                break;
+			case sub:
+                                cpu_sub(cpu);
+                                if (p_errno){
+                                        break;
+                                }
+				i++;
+                                break;
+			case divide:
+                                cpu_div(cpu);
+                                if (p_errno){
+                                        break;
+                                }
+				i++;
+                                break;
+			case tr:
+				i = cpu->firmware[i + 1];
+			case trip:
+				cpu_trip(cpu, &i, cpu->firmware[i + 1]);
+				break;
+			case trin:
+                                cpu_trin(cpu, &i, cpu->firmware[i + 1]);
+                                break;
+			case triz:
+                                cpu_triz(cpu, &i, cpu->firmware[i + 1]);
+                                break;
+			default:
+				i++;
 
 		}
+	printf("Ala = %d Gly = %d\n", cpu->r[1], cpu->r[0]);
+	if (p_errno){
+		printf("Error at %d", i);
+		return 1;
+	}
 	}
 	return 0;
 }
@@ -95,6 +251,7 @@ int cpu_dump(Cpu *cpu){
 	printf("Registers\n");
 	for (i = 0; i < REG_NUM; i++){
 		printf("%-2d %s %d\n", i, Reg[i], cpu->r[i]);
+		int tmp = cpu->r[i];
 	}
 	printf("\nFirmware\n");
 	for(i = 0; i < cpu->prog_len; i += 1){
