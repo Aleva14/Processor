@@ -26,3 +26,4 @@ extern int s_stack_push(S_stack *stack, Type data);
 
 extern int s_stack_dump(S_stack *stack);
 
+extern Type s_stack_peek(S_stack *stack);

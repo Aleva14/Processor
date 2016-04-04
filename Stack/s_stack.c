@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define SIZE 1024
 #define S_POP_ERR_RETVAL -42
@@ -11,7 +12,7 @@ enum S_errors{
 };
 int s_errno = 0;
 
-typedef int Type;
+typedef uint16_t Type;
 typedef struct stack{
 	Type elem[SIZE];
 	int head;
@@ -43,7 +44,7 @@ int s_stack_is_full(S_stack *stack){
 Type s_stack_pop(S_stack *stack){
 	if (stack == NULL){
                 s_errno = NO_STACK;
-                return 1;
+                return S_POP_ERR_RETVAL;
         }
 	Type tmp;
 	if (s_stack_is_empty(stack)){
@@ -87,5 +88,29 @@ int s_stack_dump(S_stack *stack){
         else
                 printf("\n");
 	return 0;
+}
+
+int s_stack_pointer(S_stack *stack){
+	if (stack == NULL){
+		s_errno = NO_STACK;
+		return -1;
+	}
+	else {
+		return stack->head;
+	}
+}
+
+Type s_stack_peek(S_stack *stack){
+	if (stack == NULL){
+		s_errno = NO_STACK;
+		return S_POP_ERR_RETVAL;
+	}
+	else if (s_stack_is_empty(stack)){
+                s_errno = EMPTY;
+                return S_POP_ERR_RETVAL;
+        } 
+	else {
+		return stack->elem[stack->head - 1];
+	}
 }
 
