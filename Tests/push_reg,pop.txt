@@ -1,0 +1,6 @@
+push 1
+pop Ala
+:LOOP
+push Ala
+tr LOOP
+/to see if errors are recognised

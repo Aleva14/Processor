@@ -24,8 +24,7 @@ enum P_errors{
 	NO_PROG,
 	EOF_FMEM,
 	DIV_BY_0,
-	EMPTY_STACK
-	NO_STACK
+	STACK,
 };
 
 int p_errno = 0;
@@ -70,15 +69,15 @@ int cpu_flash(int fd, Cpu *cpu){
 }
 
 static inline cpu_push_num(Cpu *cpu, reg num){
-	printf("push_num %d\n", num);
-	s_stack_push(&cpu->mem, num);
+	if (s_stack_push(&cpu->mem, num)){
+		p_errno = STACK;	
+	}
 }
 
 static inline cpu_pop(Cpu *cpu, int reg_num){
 	reg tmp = s_stack_pop(&(cpu->mem));
-	printf("pop num %d\n", tmp);
 	if (s_errno == EMPTY){
-		p_errno = EMPTY_STACK;
+		p_errno = STACK;
 	}
 	else {
 		cpu->r[reg_num] = tmp;
@@ -86,14 +85,16 @@ static inline cpu_pop(Cpu *cpu, int reg_num){
 }
 
 static inline cpu_push_reg(Cpu *cpu, int reg_num){
-	s_stack_push(&cpu->mem, cpu->r[reg_num]);	
+	if (s_stack_push(&cpu->mem, cpu->r[reg_num])){
+		p_errno = STACK;
+	}	
 }
 
 static inline cpu_add(Cpu *cpu){
-	int a = s_stack_pop(&cpu->mem);
-	int b = s_stack_pop(&cpu->mem);
+	sign_reg a = s_stack_pop(&cpu->mem);
+	sign_reg b = s_stack_pop(&cpu->mem);
 	if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else {
                 s_stack_push(&cpu->mem, a + b);
@@ -104,7 +105,7 @@ static inline cpu_sub(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
         int b = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else {
                 s_stack_push(&cpu->mem, b - a);
@@ -115,7 +116,7 @@ static inline cpu_mul(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
         int b = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else {
                 s_stack_push(&cpu->mem, a * b);
@@ -126,20 +127,25 @@ static inline cpu_div(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
         int b = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else if (a != 0){
 		s_stack_push(&cpu->mem, b / a);
+		s_stack_push(&cpu->mem, b % a);
 	}
 	else {
 		p_errno = DIV_BY_0;		
 	}
 }
 
+static inline cpu_tr(Cpu *cpu, int destination){
+	NPC = cpu->firmware[NPC + 1];
+}
+
 static inline cpu_trip(Cpu *cpu, int destination){
 	sign_reg a = s_stack_pop(&cpu->mem);
 	if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
 	else if (a > 0){
 		NPC = destination;
@@ -154,7 +160,7 @@ static inline cpu_trin(Cpu *cpu, int destination){
         sign_reg a = s_stack_pop(&cpu->mem);
         printf("Gly == %d", a);
 	if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else if (a < 0){
                 NPC = destination;
@@ -168,7 +174,7 @@ static inline cpu_trin(Cpu *cpu, int destination){
 static inline cpu_triz(Cpu *cpu, int destination){
         sign_reg a = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
-                p_errno = EMPTY_STACK;
+                p_errno = STACK;
         }
         else if (a == 0){
                 NPC = destination;
@@ -176,6 +182,11 @@ static inline cpu_triz(Cpu *cpu, int destination){
 	else {
 		NPC_INC(2);
 	}
+}
+
+static inline cpu_out(Cpu *cpu){
+	sign_reg tmp = s_stack_pop(&cpu->mem);
+	printf("\n%d", tmp);
 }
 
 int cpu_start(Cpu *cpu){
@@ -225,7 +236,8 @@ int cpu_start(Cpu *cpu){
 				NPC_INC(1);
                                 break;
 			case tr:
-				cpu->r[Npc] = cpu->firmware[NPC + 1];
+				cpu_tr(cpu, cpu->firmware[NPC + 1]);
+				break;
 			case trip:
 				cpu_trip(cpu, cpu->firmware[NPC + 1]);
 				break;
@@ -235,21 +247,26 @@ int cpu_start(Cpu *cpu){
 			case triz:
                                 cpu_triz(cpu, cpu->firmware[NPC + 1]);
                                 break;
-			case gsp:
-				int sp = s_stack_peek(&cpu->mem);
-				if (sp == -1){
-					p_errno = NO_STACK;
-					break;
-				}
-				else {
-					s_stack_push(&cpu->mem, sp);
-				}
+		//	case gsp:
+		//		int sp = s_stack_peek(&cpu->mem);
+		//		if (sp == -1){
+		//			p_errno = NO_STACK;
+		//			break;
+		//		}
+		//		else {
+		//			s_stack_push(&cpu->mem, sp);
+		//		}
+		//		break;
+			case out:
+				cpu_out(cpu);
+				NPC_INC(1);
+				break; 
 			default:
 				NPC_INC(1);
 
 		}
 	if (p_errno){
-		printf("Error at %d", NPC);
+		printf("\nError at %d", NPC);
 		return 1;
 	}
 	}
@@ -260,6 +277,8 @@ int cpu_start(Cpu *cpu){
 int cpu_dump(Cpu *cpu){
 	printf("\n\nCPU dump\n");
 	int i = 0;
+	printf("p_error = %d\n", p_errno);
+	printf("s_errno = %d\n", s_errno);
 	printf("Registers\n");
 	for (i = 0; i < REG_NUM; i++){
 		printf("%-2d %s %d\n", i, Reg[i], cpu->r[i]);

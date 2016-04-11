@@ -1,0 +1,17 @@
+push 1
+push 1
+add
+out
+push 2
+push -1
+add
+out
+push 32760
+push 32760
+add
+out
+add
+/2
+/1
+/?
+/error
