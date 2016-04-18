@@ -45,9 +45,9 @@ def Assemble(program):
             else:
                 errno = error.index('wtf')
                 return Report("'wtf'", i + 1, program[i])  
-        elif temp[0][0] == '/':
+        elif temp[0] == '/':
             pass  
-        elif temp[0][0] == ':':
+        elif temp[0] == ':':
             temp[0] = temp[0][1:]
             label[temp[0]] = len(result)
         elif temp[0] == 'in':

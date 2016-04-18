@@ -95,14 +95,16 @@ static inline cpu_mul(Cpu *cpu){
  }
 
 static inline cpu_div(Cpu *cpu){
-        int a = s_stack_pop(&cpu->mem);
-        int b = s_stack_pop(&cpu->mem);
+        sign_reg a = s_stack_pop(&cpu->mem);
+        sign_reg b = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
                 p_errno = STACK;
         }
         else if (a != 0){
-		s_stack_push(&cpu->mem, b / a);
-		s_stack_push(&cpu->mem, b % a);
+		sign_reg quotient = b / a;
+		sign_reg remainder = b % a;
+		s_stack_push(&cpu->mem, remainder);
+		s_stack_push(&cpu->mem, quotient);
 	}
 	else {
 		p_errno = DIV_BY_0;		
