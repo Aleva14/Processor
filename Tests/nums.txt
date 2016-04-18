@@ -1,4 +1,4 @@
-in
+push 15
 pop Tyr
 push Tyr
 trin NEGATIVE

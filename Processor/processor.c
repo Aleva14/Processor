@@ -1,42 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "Stack/s_stack.h"
-#include <stdint.h>
-#include <string.h>
+#include "processor.h"
 
-#define REG_NUM 20
-#define PROG_MEM_SIZE 65536 // 2 ^ 16
-#define NPC_INC(x) cpu->r[Npc] += (x) 
-#define NPC cpu->r[Npc]
-
-typedef uint16_t reg;
-typedef int16_t sign_reg;
-
-enum Register{
-	Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc};
-
-enum Command {push_num, push_reg, pop, in, out, tr, triz, trip, trin, add, mul, sub, divide, gsp, asp, rsp};
-
-char Reg[20][4] = {"Gly\0", "Ala\0", "Val\0", "Leu\0", "Ser\0", "Thr\0", "Asp\0", "Asn\0", "Glu\0", "Gln\0", "Lys\0", "Arg\0", "Cys\0", "Met\0", "Fen\0", "Tyr\0", "Trp\0", "Hys\0", "Pro\0","Npc\0"};
-
-enum P_errors{ 
-        INV_PROC = 1,
-	NO_PROG,
-	EOF_FMEM,
-	DIV_BY_0,
-	STACK,
-};
+static const char Reg[20][4] = {"Gly\0", "Ala\0", "Val\0", "Leu\0", "Ser\0", "Thr\0", "Asp\0", "Asn\0", "Glu\0", "Gln\0", "Lys\0", "Arg\0", "Cys\0", "Met\0", "Fen\0", "Tyr\0", "Trp\0", "Hys\0", "Pro\0", "Npc\0"};
 
 int p_errno = 0;
-
-typedef struct cpu{
-	S_stack mem;
-	reg firmware[PROG_MEM_SIZE];
-	reg r[REG_NUM];
-	int prog_len;
-} Cpu;
-
-int cpu_dump(Cpu *cpu);
 
 int cpu_init(Cpu *cpu){
 	if (s_stack_init(&cpu->mem)){
@@ -115,6 +81,7 @@ static inline cpu_sub(Cpu *cpu){
 static inline cpu_mul(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
         int b = s_stack_pop(&cpu->mem);
+	int result = a * b;
         if (s_errno == EMPTY){
                 p_errno = STACK;
         }
@@ -292,12 +259,13 @@ int cpu_dump(Cpu *cpu){
 	s_stack_dump(&cpu->mem);	
 }
 
-int main(){
-	int fd = open("./test.bin");
-	Cpu cpu;
-	cpu_init(&cpu);
-	cpu_flash(fd, &cpu);
-	cpu_start(&cpu);
-	cpu_dump(&cpu);
-	return 0;	 
-}
+/*int main(){
+        int fd = open("./test.bin");
+        Cpu cpu;
+        cpu_init(&cpu);
+        cpu_flash(fd, &cpu);
+        cpu_start(&cpu);
+        cpu_dump(&cpu);
+        return 0;
+}*/
+

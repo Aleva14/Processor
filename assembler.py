@@ -2,7 +2,7 @@ import sys
 import struct
 
 command = {"push_num": 0, "push_reg": 1, "pop": 2, "in": 3, "out": 4, "tr": 5, 
-"triz": 6, "trip": 7, "trin": 8, "add": 9, "mul": 10, "sub": 11, "div": 12, "gsp": 13 "asp": 14, "rsp": 15}
+"triz": 6, "trip": 7, "trin": 8, "add": 9, "mul": 10, "sub": 11, "div": 12, "gsp": 13, "asp": 14, "rsp": 15}
 register = {"Gly": 0, "Ala": 1, "Val": 2, "Leu": 3, "Ser": 4, "Thr": 5, 
 "Asp": 6, "Asn": 7, "Glu": 8, "Gln": 9,  "Lys": 10,"Arg": 11, "Cys": 12, 
 "Met": 13, "Fen": 14, "Tyr": 15, "Trp": 16, "Hys": 17, "Pro": 18, "Npc": 19}
@@ -44,7 +44,9 @@ def Assemble(program):
                 result.append(register[temp[1]])
             else:
                 errno = error.index('wtf')
-                return Report("'wtf'", i + 1, program[i])    
+                return Report("'wtf'", i + 1, program[i])  
+        elif temp[0][0] == '/':
+            pass  
         elif temp[0][0] == ':':
             temp[0] = temp[0][1:]
             label[temp[0]] = len(result)

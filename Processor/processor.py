@@ -32,7 +32,7 @@ def CalcRevPol(task):
                 errno = error.index('wtf')
                 return Report("'wtf'", i + 1, task[i])    
         elif temp[0][0] == ':':
-          a = 3  
+          pass  
         elif temp[0] == 'in':
             a = raw_input()
             if a.isdigit() or (a[0] == '-' and a[1:].isdigit()):
@@ -98,6 +98,8 @@ def CalcRevPol(task):
             else:
                 errno = error.index('div by 0')
                 return Report("'div by 0'", i + 1, task[i])
+        elif temp[0] == '/':
+            pass
         else:
             errno = error.index('wtf')
             return Report("'wtf'", i + 1, task[i])
