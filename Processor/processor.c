@@ -68,8 +68,8 @@ static inline cpu_add(Cpu *cpu){
 }
 
 static inline cpu_sub(Cpu *cpu){
-        int a = s_stack_pop(&cpu->mem);
-        int b = s_stack_pop(&cpu->mem);
+        sign_reg a = s_stack_pop(&cpu->mem);
+        sign_reg b = s_stack_pop(&cpu->mem);
         if (s_errno == EMPTY){
                 p_errno = STACK;
         }
@@ -82,13 +82,17 @@ static inline cpu_mul(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
         int b = s_stack_pop(&cpu->mem);
 	int result = a * b;
+	sign_reg higher_order = result >> 16;
+	sign_reg lower_order = result & 0xffff;
+	printf("Result %d, higher %d, lower %d\n", result, higher_order, lower_order);
         if (s_errno == EMPTY){
                 p_errno = STACK;
         }
         else {
-                s_stack_push(&cpu->mem, a * b);
+                s_stack_push(&cpu->mem, higher_order);
+		s_stack_push(&cpu->mem, lower_order);
 	}
-}
+ }
 
 static inline cpu_div(Cpu *cpu){
         int a = s_stack_pop(&cpu->mem);
@@ -125,7 +129,6 @@ static inline cpu_trip(Cpu *cpu, int destination){
 
 static inline cpu_trin(Cpu *cpu, int destination){
         sign_reg a = s_stack_pop(&cpu->mem);
-        printf("Gly == %d", a);
 	if (s_errno == EMPTY){
                 p_errno = STACK;
         }
@@ -182,7 +185,7 @@ int cpu_start(Cpu *cpu){
 				NPC_INC(1);
 				break;
 			case mul:
-                                cpu_mul(cpu);
+				cpu_mul(cpu);
                                 if (p_errno){
                                         break;
                                 }

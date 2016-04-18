@@ -1,0 +1,11 @@
+push 1
+push 2
+mul
+push -1
+push 2 
+mul
+push 32001
+push 32001
+mul
+out
+out
