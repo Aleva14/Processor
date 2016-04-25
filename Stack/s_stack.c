@@ -8,7 +8,8 @@
 enum S_errors{
         FULL = 1,
         EMPTY,
-	NO_STACK
+	NO_STACK,
+	INVAL
 };
 int s_errno = 0;
 
@@ -111,6 +112,20 @@ Type s_stack_peek(S_stack *stack){
         } 
 	else {
 		return stack->elem[stack->head - 1];
+	}
+}
+
+int s_stack_set(S_stack *stack, Type new_head){
+	if (stack == NULL){
+		s_errno = NO_STACK;
+		return 1;
+	}
+	else if	(new_head > SIZE){
+		s_errno = INVAL;
+		return 1;
+	}
+	else {
+		stack->head = new_head;
 	}
 }
 
