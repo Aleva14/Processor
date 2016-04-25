@@ -7,4 +7,4 @@ Processor/processor.o: Stack/libstack.a Processor/processor.c
 Stack/libstack.a: Stack/s_stack.o 
 	ar crs Stack/libstack.a Stack/s_stack.o
 Stack/s_stack.o: Stack/s_stack.c
-	gcc -c Stack/s_stack.c
+	gcc -c Stack/s_stack.c -o Stack/s_stack.o

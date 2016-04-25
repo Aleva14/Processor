@@ -1,0 +1,5 @@
+gsp Gly
+push 1
+gsp Ala
+push 2
+gsp Val

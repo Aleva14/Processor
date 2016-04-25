@@ -115,7 +115,7 @@ Type s_stack_peek(S_stack *stack){
 	}
 }
 
-int s_stack_set(S_stack *stack, Type new_head){
+int s_stack_set_pointer(S_stack *stack, Type new_head){
 	if (stack == NULL){
 		s_errno = NO_STACK;
 		return 1;
@@ -127,5 +127,6 @@ int s_stack_set(S_stack *stack, Type new_head){
 	else {
 		stack->head = new_head;
 	}
+	return 0;
 }
 

@@ -1,0 +1,9 @@
+push 0
+push 1
+push 2
+push 3
+gsp Gly
+push 1
+pop Ala
+ssp Ala
+gsp Val

@@ -1,6 +1,6 @@
 #include "processor.h"
 
-static const char Reg[20][4] = {"Gly\0", "Ala\0", "Val\0", "Leu\0", "Ser\0", "Thr\0", "Asp\0", "Asn\0", "Glu\0", "Gln\0", "Lys\0", "Arg\0", "Cys\0", "Met\0", "Fen\0", "Tyr\0", "Trp\0", "Hys\0", "Pro\0", "Npc\0", "Nsp\0"};
+static const char Reg[20][4] = {"Gly\0", "Ala\0", "Val\0", "Leu\0", "Ser\0", "Thr\0", "Asp\0", "Asn\0", "Glu\0", "Gln\0", "Lys\0", "Arg\0", "Cys\0", "Met\0", "Fen\0", "Tyr\0", "Trp\0", "Hys\0", "Pro\0", "Npc\0"};
 
 int p_errno = 0;
 
@@ -161,6 +161,17 @@ static inline cpu_out(Cpu *cpu){
 	printf("\n%d", tmp);
 }
 
+static inline cpu_gsp(Cpu *cpu, int reg){
+	cpu->r[reg] = s_stack_pointer(&cpu->mem);
+}
+
+static inline cpu_ssp(Cpu *cpu, int reg){
+	if (s_stack_set_pointer(&cpu->mem, cpu->r[reg])){
+		p_errno = STACK;		
+	}
+	printf("stack pointer %d", cpu->r[reg]);
+}
+
 int cpu_start(Cpu *cpu){
 	while (NPC < cpu->prog_len){
 		switch (cpu->firmware[NPC]){
@@ -219,16 +230,14 @@ int cpu_start(Cpu *cpu){
 			case triz:
                                 cpu_triz(cpu, cpu->firmware[NPC + 1]);
                                 break;
-		//	case gsp:
-		//		int sp = s_stack_peek(&cpu->mem);
-		//		if (sp == -1){
-		//			p_errno = NO_STACK;
-		//			break;
-		//		}
-		//		else {
-		//			s_stack_push(&cpu->mem, sp);
-		//		}
-		//		break;
+			case gsp:
+				cpu_gsp(cpu, cpu->firmware[NPC + 1]);
+				NPC_INC(2);
+				break;
+			case ssp:
+				cpu_ssp(cpu, cpu->firmware[NPC + 1]);
+				NPC_INC(2);
+				break;
 			case out:
 				cpu_out(cpu);
 				NPC_INC(1);
