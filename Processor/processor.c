@@ -172,6 +172,39 @@ static inline cpu_ssp(Cpu *cpu, int reg){
 	printf("stack pointer %d", cpu->r[reg]);
 }
 
+static inline cpu_read(Cpu *cpu, reg fd, reg size){
+	reg stack_pointer = s_stack_pointer(&cpu->mem);
+	printf("Stack pointer %d, size %d\n", stack_pointer, size);
+	read(fd, &cpu->mem + stack_pointer, size);
+	write(1, &cpu->mem, size);
+	printf("\n");
+	s_stack_set_pointer(&cpu->mem, stack_pointer + size); 
+}
+
+static inline cpu_write(Cpu *cpu, reg fd, reg size){
+	reg stack_pointer = s_stack_pointer(&cpu->mem);
+	write(fd, &cpu->mem + stack_pointer, size);
+} 
+
+static inline cpu_syscall(Cpu *cpu){
+	reg call_type = cpu->r[Tyr];
+	reg arg_1 = cpu->r[Glu];
+	reg arg_2 = cpu->r[Lys];
+	switch (call_type){
+		case sys_read:
+			cpu_read(cpu, arg_1, arg_2);
+			break;
+		case sys_write:
+			cpu_write(cpu, arg_1, arg_2);
+			break;
+		default:
+			p_errno = INV_SYSCALL;
+			break;
+	}
+		
+}
+
+
 int cpu_start(Cpu *cpu){
 	while (NPC < cpu->prog_len){
 		switch (cpu->firmware[NPC]){
@@ -237,6 +270,10 @@ int cpu_start(Cpu *cpu){
 			case ssp:
 				cpu_ssp(cpu, cpu->firmware[NPC + 1]);
 				NPC_INC(2);
+				break;
+			case syscall:
+				cpu_syscall(cpu);
+				NPC_INC(1);
 				break;
 			case out:
 				cpu_out(cpu);

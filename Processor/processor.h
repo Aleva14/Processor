@@ -13,16 +13,23 @@ typedef uint16_t reg;
 typedef int16_t sign_reg;
 
 enum Register{
-        Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc, Nsp};
+        Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc};
 
-enum Command {push_num, push_reg, pop, in, out, tr, triz, trip, trin, add, mul, sub, divide, gsp, ssp};
+enum Command {push_num, push_reg, pop, in, out, tr, triz, trip, trin, add, mul, sub, divide, gsp, ssp, syscall};
+
+enum Syscall {
+	sys_read,
+	sys_write,
+	sys_exit
+};
 
 enum P_errors{
         INV_PROC = 1,
         NO_PROG,
         EOF_FMEM,
         DIV_BY_0,
-        STACK
+        STACK,
+	INV_SYSCALL
 };
 
 extern int p_errno;

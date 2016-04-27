@@ -1,0 +1,22 @@
+push 0
+pop Tyr
+push 0
+pop Glu
+push 8
+pop Lys
+push Lys
+pop Ala
+syscall
+push 1
+pop Tyr
+push 1
+pop Glu
+push 8
+pop Lys
+gsp Gly
+push Gly
+push Ala
+sub
+pop Gly
+ssp Gly
+syscall
