@@ -1,0 +1,7 @@
+push 0
+pop Tyr
+push 0
+pop Glu
+push 10000
+pop Lys
+syscall

@@ -169,24 +169,37 @@ static inline cpu_ssp(Cpu *cpu, int reg){
 	if (s_stack_set_pointer(&cpu->mem, cpu->r[reg])){
 		p_errno = STACK;		
 	}
-	printf("stack pointer %d", cpu->r[reg]);
 }
 
 static inline cpu_read(Cpu *cpu, reg fd, reg size){
 	reg stack_pointer = s_stack_pointer(&cpu->mem);
-	printf("Stack pointer %d, size %d\n", stack_pointer, size);
-	read(fd, &cpu->mem + stack_pointer, size);
-	write(1, &cpu->mem, size);
-	printf("\n");
+	if (stack_pointer + size > SIZE){
+		size = SIZE - stack_pointer;
+	}
+	if (read(fd, &cpu->mem + stack_pointer, size) == -1){
+		p_errno = INV_SYSCALL;		
+	}
 	s_stack_set_pointer(&cpu->mem, stack_pointer + size); 
 }
 
 static inline cpu_write(Cpu *cpu, reg fd, reg size){
 	reg stack_pointer = s_stack_pointer(&cpu->mem);
-	write(fd, &cpu->mem + stack_pointer, size);
+	if (stack_pointer + size > SIZE){
+                size = SIZE - stack_pointer;
+        }
+	if (write(fd, &cpu->mem + stack_pointer, size) == -1){
+		p_errno = INV_SYSCALL;	
+	}
+	s_stack_set_pointer(&cpu->mem, stack_pointer + size);
 } 
 
-static inline cpu_syscall(Cpu *cpu){
+static inline cpu_exit(Cpu *cpu, int *ret_val){
+	cpu->run = 0;
+	*ret_val = cpu->r[Glu];
+}
+
+static inline cpu_syscall(Cpu *cpu, int *ret_val){
+	printf("syscall");
 	reg call_type = cpu->r[Tyr];
 	reg arg_1 = cpu->r[Glu];
 	reg arg_2 = cpu->r[Lys];
@@ -197,6 +210,9 @@ static inline cpu_syscall(Cpu *cpu){
 		case sys_write:
 			cpu_write(cpu, arg_1, arg_2);
 			break;
+		case sys_exit:
+			cpu_exit(cpu, ret_val);
+			break;
 		default:
 			p_errno = INV_SYSCALL;
 			break;
@@ -206,7 +222,9 @@ static inline cpu_syscall(Cpu *cpu){
 
 
 int cpu_start(Cpu *cpu){
-	while (NPC < cpu->prog_len){
+	cpu->run = 1;
+	int ret_val = 0;
+	while ((NPC < cpu->prog_len) && cpu->run){
 		switch (cpu->firmware[NPC]){
 			case push_num:
 				cpu_push_num(cpu, cpu->firmware[NPC + 1]);
@@ -272,7 +290,7 @@ int cpu_start(Cpu *cpu){
 				NPC_INC(2);
 				break;
 			case syscall:
-				cpu_syscall(cpu);
+				cpu_syscall(cpu, &ret_val);
 				NPC_INC(1);
 				break;
 			case out:
@@ -288,7 +306,8 @@ int cpu_start(Cpu *cpu){
 		return 1;
 	}
 	}
-	return 0;
+	cpu->run = 0;
+	return ret_val;
 }
 
 

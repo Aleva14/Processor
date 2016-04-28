@@ -1,0 +1,11 @@
+push 1
+pop Gly
+push 1
+pop Gly
+push 9
+pop Glu
+push 2
+pop Tyr
+syscall
+push 1
+pop Ala

@@ -30,6 +30,7 @@ enum P_errors{
         DIV_BY_0,
         STACK,
 	INV_SYSCALL
+	
 };
 
 extern int p_errno;
@@ -38,6 +39,7 @@ typedef struct cpu{
         S_stack mem;
         reg firmware[PROG_MEM_SIZE];
         reg r[REG_NUM];
+	int run;
         int prog_len;
 } Cpu;
 

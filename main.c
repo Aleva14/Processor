@@ -10,8 +10,8 @@ int main(){
         Cpu cpu;
         cpu_init(&cpu);
         cpu_flash(fd, &cpu);
-        cpu_start(&cpu);
+        int ret_val = cpu_start(&cpu);
         cpu_dump(&cpu);
-        return 0;
+        return ret_val;
 }
 
