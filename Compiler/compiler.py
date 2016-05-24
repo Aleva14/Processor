@@ -30,7 +30,8 @@ class Tree:
         self.root.print_node()
 t_type = ['start', 'stop', 'end_st', '(', ')', 'add', 'sub', 'mul', 'div', 'num', 'def', 'undef', 'var', 'assign']
 
-var_table = []
+num_of_variables = 8
+var_table = [0 for i in range(0, num_of_variables)]
 
 class Token:
     def __init__(self, token_type, value):
@@ -79,11 +80,12 @@ def lex():
                         result.append(Token('div', None))
                     elif j == '*':
                         result.append(Token('mul', None))
+                    elif j in var_table:
+                        result.append(Token('var', j))
             result.append(Token('end_st', None))
         else:
-            print Error
+            print 'Error'
             exit(1)
-            
     for i in result:
         print i.type, i.value
     return result
@@ -95,17 +97,74 @@ def build_tree():
     return tree
 
 def get_Block():
-    if token[cur].type == 'start': 
+    global program
+    global cur
+    if program[cur].type == 'start': 
         tmp = Node('Block')
+        cur += 1
         tmp.left = get_S()
-        if token[cur].type != 'stop':
+        if cur >= len(program):
            print 'Error'
            exit(1)
+        print 'END BLOCK', program[cur].type
+        if program[cur].type != 'stop':
+           print 'Error'
+           exit(1)
+        return tmp
+    else:
+        print 'Error'
+        exit(1)
 
 def get_S():
+    global program
+    global cur
     tmp = Node('S')
-    tmp.left = get_E()
-    tmp.right = get_S()
+    tmp.left = get_Def()
+    if tmp.left == None:
+        tmp.left = get_Undef()
+        if tmp.left == None:
+            tmp.left = get_Assignment()
+    if (program[cur].type == 'end_st'):
+        cur += 1
+        tmp.right = get_S()
+        return tmp
+    else:
+        return None
+
+def get_Def():
+    global program
+    global cur
+    tmp = Node('-1')
+    if (program[cur].type == 'def'):
+        tmp.data = 'def'
+        tmp.left = Node(program[cur].value)
+        cur += 1
+        return tmp
+    return None
+
+def get_Undef():
+    global program
+    global cur
+    tmp = Node('-1')
+    if (program[cur].type == 'undef'):
+        tmp.data = 'undef'
+        tmp.left = Node(program[cur].value)
+        cur += 1
+        return tmp
+    return None
+
+def get_Assignment():
+    global program
+    global cur
+    tmp = Node('-1')
+    if program[cur].type == 'assign':
+        tmp.data = 'assign'
+        tmp.left = Node(program[cur].value)
+        cur += 1
+        tmp.right = get_E()
+        return tmp
+    return None
+            
 
 def get_E():
     tmp = Node('E')
@@ -114,63 +173,89 @@ def get_E():
 
 def get_N():
     global program
-    global cur_token
-    tmp = Node('-1')
-    print 'get_n ', program[cur_token]
-    if program[cur_token].type == 'num':
-        tmp.data = program[cur_token]
-        cur_token += 1
+    global cur
+    if program[cur].type == 'num':
+        tmp = Node(program[cur].value)
+        cur += 1
         return tmp
+    return None
+    
+
+def get_V():
+    global program
+    global cur
+    if program[cur].type == 'var':
+        tmp = Node('var')
+        tmp.left = Node(program[cur].value)
+        cur += 1
+        return tmp
+    return None 
 
 def get_P():
     global program
-    global cur_token
+    global cur
     tmp = Node('-1')
     tmp.left = get_T()
-    if (program[cur_token].type == 'add'): 
+    if (program[cur].type == 'add'): 
         tmp.data = '+'
-        cur_token += 1
-    elif (program[cur_token] == 'sub'):
+        cur += 1
+        tmp.right = get_P()
+    elif (program[cur].type == 'sub'):
         tmp.data = '-'
-        cur_token += 1
-    else:
-        return tmp
-    tmp.right = get_P()
+        cur += 1
+        tmp.right = get_P()
     return tmp
 
 def get_T():
     global program
-    global cur_token
+    global cur
     tmp = Node('-1')
-    tmp.left = get_B() #get_N() 
-    if (program[cur_token] == 'mul'):
-        tmp.data = '*'
-        cur_token += 1
-    elif (program[cur_token] == 'div'):
+    tmp.left = get_B()
+    if (program[cur].type == 'mul'):
+        tmp.data = '*'         
+        cur += 1
+        tmp.right = get_T()
+    elif (program[cur].type == 'div'):
         tmp.data = '/'
-        cur_token += 1
-    else:
-        return tmp
-    tmp.right = get_T()
+        cur += 1
+        tmp.right = get_T()
     return tmp
 
 def get_B():
     global program
-    global cur_token
+    global cur
     tmp = Node('-1')
-    if (program[cur_token] == '('):
-        cur_char += 1
-        print 'found bracket'
+    if (program[cur].type == '('):
+        tmp.type = 'B'
+        cur += 1
         tmp.left = get_E()
-        if (program[cur_token] != ')'):
+        if (program[cur].type != ')'):
             print 'wrong brackets'
-            return None
-        cur_char += 1
+            exit(1)
+        cur += 1
     else:
-        print 'looking fo num'
         tmp.left = get_N()
+        if tmp.left == None:
+            tmp.left = get_V()
     return tmp
 
+def dump_def(n):
+    var = n.left.data
+    if var in var_table:
+        print 'Already defined'
+    else:
+        for i in var_table:
+            print 'elem', i
+            if i == 0:
+                var_table[var_table.index(i)] = var
+                break;
+            if not(i in var_table):
+                print 'Too many variables'
+
+def dump_undef(n):
+    var = n.left.data
+    i = var_table.index(var)
+    var_table[i] = 0
 
 def dump(n):
     if n.left != None:
@@ -179,6 +264,12 @@ def dump(n):
         dump(n.right)
     if n.data.isdigit():
         print 'PUSH', n.data
+    elif n.data == 'var':
+        register = 'v_' + str(var_table.index(n.left.data))
+        print 'PUSH', register
+    elif n.data == 'assign':
+        register = 'v_' + str(var_table.index(n.left.data))
+        print 'POP', register
     elif n.data == '+':
         print 'ADD'
     elif n.data == '-':
@@ -187,12 +278,15 @@ def dump(n):
         print 'MUL'
     elif n.data == '/':
         print 'DIV'
-    
+    elif n.data == 'def':
+        dump_def(n)
+    elif n.data == 'undef':
+        dump_undef(n)
 
 
 program = open(sys.argv[1])
 program = program.readlines()
 program = lex()
-#tree = build_tree()
-#tree.print_tree()
-#dump(tree.root)
+cur = 0
+tree = build_tree()
+dump(tree.root)

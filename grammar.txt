@@ -1,5 +1,11 @@
-G0: E | '/0'
+G0: Block
+Block: 'start' (Statement) 'stop'
+Statement: Assignment | def | undef '!'
+Assignment: var '=' E
 E = P
 P = T('+' | '-' T)
-T = N('*' | '/' T)
+T = (N | var) ('*' | '/' T)
 N = ([0;9])
+var = ([a;z] | [A;Z])
+def: 'def' var '!'
+undef: 'undef' var '!'

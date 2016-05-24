@@ -5,7 +5,7 @@ command = {"push_num": 0, "push_reg": 1, "pop": 2, "in": 3, "out": 4, "tr": 5,
 "triz": 6, "trip": 7, "trin": 8, "add": 9, "mul": 10, "sub": 11, "div": 12, "gsp": 13, "ssp": 14, "syscall": 15}
 register = {"Gly": 0, "Ala": 1, "Val": 2, "Leu": 3, "Ser": 4, "Thr": 5, 
 "Asp": 6, "Asn": 7, "Glu": 8, "Gln": 9,  "Lys": 10,"Arg": 11, "Cys": 12, 
-"Met": 13, "Fen": 14, "Tyr": 15, "Trp": 16, "Hys": 17, "Pro": 18, "Npc": 19}
+"Met": 13, "Fen": 14, "Tyr": 15, "Trp": 16, "Hys": 17, "Pro": 18, "Npc": 19, "v_1": 20, "v_2": 21, "v_3": 22, "v_4": 23, "v_5": 24, "v_6": 25, "v_7": 26}
 
 
 def Assemble(program):

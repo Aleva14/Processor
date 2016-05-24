@@ -13,7 +13,7 @@ typedef uint16_t reg;
 typedef int16_t sign_reg;
 
 enum Register{
-        Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc};
+        Gly, Ala, Val, Leu, Ser, Thr, Asp, Asn, Glu, Gln, Lys, Arg, Cys, Met, Fen, Tyr, Trp, Hys, Pro, Npc, v_0, v_1, v_2, v_3, v_4, v_5, v_6, v_7};
 
 enum Command {push_num, push_reg, pop, in, out, tr, triz, trip, trin, add, mul, sub, divide, gsp, ssp, syscall};
 
